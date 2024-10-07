@@ -1,0 +1,61 @@
+<!-- Author: Zhuojun Shao
+Date: August 2024 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSE Chat Room - register</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <form id="registerForm">
+            <h1>FSE Chat Room</h1>
+            <div>Username</div>
+            <input type="text" id="username" required>
+            <div>Password</div>
+            <input type="password" id="password" required>
+            <div>Confirm Password</div>
+            <input type="password" id="copassword" required>
+            <div>
+                <button type="submit">Register</button>
+                <button id="ReturnLogin" type="button">Return Login</button>
+            </div>
+        </form>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        // user register
+        document.getElementById('registerForm').addEventListener('submit', async function(e){
+            e.preventDefault();
+            const username=document.getElementById('username').value;
+            const password=document.getElementById('password').value;
+            const copassword=document.getElementById('copassword').value;
+
+            if (password!=copassword){
+                document.getElementById('message').textContent="Passwords do not match!";
+                document.getElementById('message').style.color="red";
+                return; //avoid submit
+            }
+            const response=await fetch('/auth/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password}),
+            });
+
+            const message=await response.text();
+            document.getElementById('message').textContent=message;
+
+            if(response.ok){
+                window.location.href='/';
+            }else{
+            }
+        });
+        document.getElementById('ReturnLogin').addEventListener('click',function(){
+            window.location.href='/';
+        })
+    </script>
+</body>
+</html>

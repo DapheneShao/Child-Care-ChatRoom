@@ -1,0 +1,57 @@
+<!-- Author: Zhuojun Shao
+Date: August 2024 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- viewport settings to ensure proper scaling on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSE Chat Room - login</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <form id="loginForm">
+            <h1>FSE Chat Room</h1>
+            <div>Username</div>
+            <input type="text" id="username" required>
+            <div>Password</div>
+            <input type="password" id="password" required>
+            <div>
+                <button type="submit">Login</button>
+                <button type="button" id="registerButton">Register</button>
+            </div>
+        </form>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        //login funtion
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const username=document.getElementById('username').value;
+            const password=document.getElementById('password').value;
+
+            const response=await fetch('/auth/login',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({username,password}),
+            });
+
+            const result=await response.json();
+            document.getElementById('message').textContent=result.message;
+
+            if (response.ok) {
+                sessionStorage.setItem('username', username); // save username to sessionStorage, to ensure every message and its owner showing correctly.
+                sessionStorage.setItem('userid', result.userId); // save username to sessionStorage, to ensure every message and its owner showing correctly.
+                    window.location.href='/chat.html';
+            }else{
+            }
+        });
+        //go to register page
+        document.getElementById('registerButton').addEventListener('click',function(){
+            window.location.href='/register.html';
+        })
+    </script>
+</body>
+</html>

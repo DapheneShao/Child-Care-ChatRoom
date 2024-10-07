@@ -1,0 +1,156 @@
+<!-- Author: Zhuojun Shao
+Date: August 2024 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Children Care ChatRoom</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <div class="chat-container">
+        <!-- chatHeader -->
+        <div class="chatHeader">
+            <div>Children Care ChatRoom</div>
+            <button class="logout">Logout</button>
+        </div>
+        <!-- notificationBox -->
+        <div id="notificationBox" class="notification-Box" ></div>
+        <!-- chatBox -->
+        <div id="chatBox" class="chat-box"></div>
+        <!-- chatForm -->
+        <form id="chatForm" class="chat-form">
+            <input class="messageInput" type="text" id="messageInput" required>
+            <div class="sendMessage">
+                <button class="messageButton" type="submit">Post</button>
+                <button id="notificationButton" class="notificationButton" type="button">Notification</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket=io();
+        const chatBox=document.getElementById('chatBox');
+        const messageInput=document.getElementById('messageInput');
+        const username=sessionStorage.getItem('username'); // 从 sessionStorage 获取用户名
+        const userid=sessionStorage.getItem('userid'); // 从 sessionStorage 获取id
+
+        // set username
+        socket.emit('setUsername', userid, username);
+
+        // send message
+        document.getElementById('chatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const content=messageInput.value;
+
+            if (!username) {
+                alert('without username');
+                return;
+            }
+            
+            socket.emit('sendMessage', {username, content});
+            messageInput.value = '';
+        });
+
+        // send notification
+        document.getElementById('notificationButton').addEventListener('click',()=>{
+            // console.log('button clicked')
+            const content=messageInput.value;
+            socket.emit('sendNotification', {username, content});
+            messageInput.value = '';
+        })
+
+        // receive message
+        socket.on('receiveMessage',function(data){
+            loadMessages()
+            chatBox.scrollTop=chatBox.scrollHeight;
+        });
+        //chatgpt generate
+        function formatTime(isoString) {
+            // transfer ISO string to Date object
+            const date = new Date(isoString);
+            const options = {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            
+            return date.toLocaleString('en-GB', options)
+                .replace(',', '')  // Remove the comma between date and time
+                .replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$2.$1.$3')  // Swap date and month
+                .replace(/(AM|PM)/, ' $1');  // Add space before AM/PM
+        }
+
+        // receive notifications
+        socket.on('receiveNotification',function(data){
+            loadNotification()
+        });
+
+        // loading history message
+        async function loadMessages(){
+            const response=await fetch('/chat/messages');
+            const messages=await response.json();
+
+
+            messages.forEach(message=>{
+                currentname='';
+                if(message.username==username){
+                    currentname='Me'
+                }else{
+                    currentname=message.username
+                }
+                const time=formatTime(message.timestamp);                
+                const div=document.createElement('div');
+                div.innerHTML=`<div class="chatContent">
+                                    <div class="topRow">
+                                        <div style="font-weight: bold;">${currentname}</div>
+                                        <div>${time}</div>
+                                    </div>
+                                    <div>${message.content}</div>
+                                </div>`;
+                div.style.backgroundColor='#EEEEEE';
+                div.style.margin='5px';
+                chatBox.appendChild(div);
+            });
+            chatBox.scrollTop=chatBox.scrollHeight;
+        }
+
+        loadMessages();
+
+        // loading history Notification
+        async function loadNotification(){
+            const response=await fetch('/chat/notification');
+            const notification=await response.json();
+            const time=formatTime(notification.timestamp);                
+                const div=document.createElement('div');
+                div.innerHTML=`<div class="notificationContent">
+                                    <img src="assets/active.png" style="width:20px;height:20px"></img>
+                                    <div>
+                                        <div>
+                                            <div style="font-weight: bold;">Notification from ${currentname}</div>
+                                            <div>${time}</div>
+                                        </div>
+                                        <div>${notification.content}</div>
+                                    <div>
+                                </div>`;
+                div.style.backgroundColor='#EEEEEE';
+                div.style.margin='5px';
+                notificationBox.innerHTML=''
+                notificationBox.appendChild(div);
+        }
+
+        loadNotification();
+
+        document.querySelector('.logout').addEventListener('click',function(){
+            sessionStorage.removeItem('username');
+            window.location.href='/';
+        })
+    </script>
+</body>
+</html>
