@@ -6,7 +6,7 @@ const express=require('express');
 // 'jwt' is for JSON Web Token handling
 const jwt=require('jsonwebtoken');
 // 'User' is the user model
-const User=require('../models/user');
+const User=require('../models/User');
 // dotenv loads environment variables from a .env file
 require('dotenv').config();
 
